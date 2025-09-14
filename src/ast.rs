@@ -1,7 +1,7 @@
-/// Definition of the AST based on the OpenQASM 3.0 specification.
-/// The definition is taken from "https://openqasm.com/language/types.html",
-/// protected under Apache License 2.0
-/// (https://github.com/openqasm/openqasm/blob/0178efff5f329b2e75c5062a05c891d537b6ec63/LICENSE).
+//! Definition of the AST based on the OpenQASM 3.0 specification.
+//! The definition is taken from "<https://openqasm.com/language/types.html>",
+//! protected under Apache License 2.0
+//! (<https://github.com/openqasm/openqasm/blob/0178efff5f329b2e75c5062a05c891d537b6ec63/LICENSE>).
 
 // =========================================
 // AST definitions corresponding to the grammar
@@ -9,61 +9,60 @@
 // =========================================
 
 // Common aliases for tokens used as terminals in the grammar
-/// lexing.md Identifier — keep raw lexeme for round-tripping and Unicode
+// lexing.md Identifier — keep raw lexeme for round-tripping and Unicode
 pub type Identifier = String;
-/// lexing.md StringLiteral — raw quoted content
+// lexing.md StringLiteral — raw quoted content
 pub type StringLiteral = String;
-/// lexing.md BitstringLiteral — keep raw to preserve width/underscores
+// lexing.md BitstringLiteral — keep raw to preserve width/underscores
 pub type BitstringLiteral = String;
-/// lexing.md HardwareQubit ('$' DIGITS) — keep raw to preserve leading '$' and digits
 pub type HardwareQubit = usize;
 pub type AnnotationKeyword = (Vec<Identifier>, RemainingLineContent); // from lexing.md
 pub type RemainingLineContent = String; // from lexing.md
-/// lexing.md VersionSpecifier: [0-9]+ ('.' [0-9]+)? — (major, optional minor)
+// lexing.md VersionSpecifier: [0-9]+ ('.' [0-9]+)? — (major, optional minor)
 pub type VersionSpecifier = (usize, Option<usize>); // from lexing.md: major, optional minor
 
 // ---------- Program ----------
-/// grammar.md line 7: program: version? statementOrScope* EOF;
+// grammar.md line 7: program: version? statementOrScope* EOF;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Program {
     pub version: Option<Version>,
     pub items: Vec<StatementOrScope>,
 }
 
-/// grammar.md line 8: version: OPENQASM VersionSpecifier SEMICOLON;
+// grammar.md line 8: version: OPENQASM VersionSpecifier SEMICOLON;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Version {
     pub spec: VersionSpecifier, // (major, optional minor), e.g., (3, Some(0))
 }
 
 // ---------- Statement / Scope ----------
-/// grammar.md line 55: statementOrScope: statement | scope;
+// grammar.md line 55: statementOrScope: statement | scope;
 #[derive(Debug, Clone, PartialEq)]
 pub enum StatementOrScope {
     Statement(Statement),
     Scope(Scope),
 }
 
-/// grammar.md line 52: scope: '{' statementOrScope* '}'
+// grammar.md line 52: scope: '{' statementOrScope* '}'
 #[derive(Debug, Clone, PartialEq)]
 pub struct Scope {
     pub items: Vec<StatementOrScope>,
 }
 
-/// grammar.md line 51: annotation: AnnotationKeyword RemainingLineContent?;
+// grammar.md line 51: annotation: AnnotationKeyword RemainingLineContent?;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Annotation {
     pub keyword: AnnotationKeyword,
     pub content: Option<RemainingLineContent>,
 }
 
-/// grammar.md line 53: pragma: PRAGMA RemainingLineContent;
+// grammar.md line 53: pragma: PRAGMA RemainingLineContent;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Pragma {
     pub content: RemainingLineContent, // RemainingLineContent
 }
 
-/// grammar.md lines 15–49: statement: pragma | annotation* (...variants...)
+// grammar.md lines 15–49: statement: pragma | annotation* (...variants...)
 #[derive(Debug, Clone, PartialEq)]
 pub struct Statement {
     pub annotations: Vec<Annotation>,
@@ -132,7 +131,7 @@ pub struct IncludeStatement {
 }
 
 // ---------- Control-flow ----------
-/// grammar.md line 68: forStatement: FOR scalarType Identifier IN (...) body=statementOrScope;
+// grammar.md line 68: forStatement: FOR scalarType Identifier IN (...) body=statementOrScope;
 #[derive(Debug, Clone, PartialEq)]
 pub struct ForStatement {
     pub ty: ScalarType, // grammar: scalarType
@@ -148,7 +147,7 @@ pub enum ForIterable {
     Expr(Expression),
 }
 
-/// grammar.md line 69: ifStatement: IF '(' expression ')' if_body=... (ELSE else_body=...)?
+// grammar.md line 69: ifStatement: IF '(' expression ')' if_body=... (ELSE else_body=...)?
 #[derive(Debug, Clone, PartialEq)]
 pub struct IfStatement {
     pub condition: Expression,
@@ -162,14 +161,14 @@ pub enum ReturnValue {
     Measure(MeasureExpression),
 }
 
-/// grammar.md line 71: whileStatement: WHILE '(' expression ')' body=statementOrScope;
+// grammar.md line 71: whileStatement: WHILE '(' expression ')' body=statementOrScope;
 #[derive(Debug, Clone, PartialEq)]
 pub struct WhileStatement {
     pub condition: Expression,
     pub body: Box<StatementOrScope>,
 }
 
-/// grammar.md line 72–76: switchStatement / switchCaseItem
+// grammar.md line 72–76: switchStatement / switchCaseItem
 #[derive(Debug, Clone, PartialEq)]
 pub struct SwitchStatement {
     pub expr: Expression,
@@ -178,26 +177,31 @@ pub struct SwitchStatement {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum SwitchCaseItem {
-    Case { expressions: Vec<Expression>, scope: Scope },
-    Default { scope: Scope },
+    Case {
+        expressions: Vec<Expression>,
+        scope: Scope,
+    },
+    Default {
+        scope: Scope,
+    },
 }
 
 // ---------- Quantum directives ----------
-/// grammar.md line 80: boxStatement: BOX designator? scope;
+// grammar.md line 80: boxStatement: BOX designator? scope;
 #[derive(Debug, Clone, PartialEq)]
 pub struct BoxStatement {
     pub designator: Option<Designator>,
     pub body: Scope,
 }
 
-/// grammar.md line 81: delayStatement: DELAY designator gateOperandList?;
+// grammar.md line 81: delayStatement: DELAY designator gateOperandList?;
 #[derive(Debug, Clone, PartialEq)]
 pub struct DelayStatement {
     pub designator: Designator,
     pub operands: Option<GateOperandList>,
 }
 
-/// grammar.md lines 91–94: gateCallStatement (named | GPHASE)
+// grammar.md lines 91–94: gateCallStatement (named | GPHASE)
 #[derive(Debug, Clone, PartialEq)]
 pub struct GateCallStatement {
     pub modifiers: Vec<GateModifier>,
@@ -220,14 +224,14 @@ pub struct MeasureArrowAssignmentStatement {
 }
 
 // ---------- Declarations ----------
-/// grammar.md line 101: aliasDeclarationStatement
+// grammar.md line 101: aliasDeclarationStatement
 #[derive(Debug, Clone, PartialEq)]
 pub struct AliasDeclarationStatement {
     pub name: Identifier,
     pub exprs: AliasExpression, // expression (DOUBLE_PLUS expression)*
 }
 
-/// grammar.md line 102: classicalDeclarationStatement
+// grammar.md line 102: classicalDeclarationStatement
 #[derive(Debug, Clone, PartialEq)]
 pub struct ClassicalDeclarationStatement {
     pub ty: ClassicalType, // scalarType | arrayType
@@ -235,7 +239,7 @@ pub struct ClassicalDeclarationStatement {
     pub init: Option<DeclarationExpression>,
 }
 
-/// grammar.md line 103: constDeclarationStatement
+// grammar.md line 103: constDeclarationStatement
 #[derive(Debug, Clone, PartialEq)]
 pub struct ConstDeclarationStatement {
     pub ty: ScalarType, // scalarType only
@@ -244,7 +248,10 @@ pub struct ConstDeclarationStatement {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum IoDirection { Input, Output }
+pub enum IoDirection {
+    Input,
+    Output,
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct IoDeclarationStatement {
@@ -254,7 +261,10 @@ pub struct IoDeclarationStatement {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum OldStyleRegisterKind { CReg, QReg }
+pub enum OldStyleRegisterKind {
+    CReg,
+    QReg,
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct OldStyleDeclarationStatement {
@@ -270,7 +280,7 @@ pub struct QuantumDeclarationStatement {
 }
 
 // ---------- Higher-order ----------
-/// grammar.md line 109: defStatement
+// grammar.md line 109: defStatement
 #[derive(Debug, Clone, PartialEq)]
 pub struct DefStatement {
     pub name: Identifier,
@@ -279,7 +289,7 @@ pub struct DefStatement {
     pub body: Scope,
 }
 
-/// grammar.md line 110: externStatement
+// grammar.md line 110: externStatement
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExternStatement {
     pub name: Identifier,
@@ -287,7 +297,7 @@ pub struct ExternStatement {
     pub return_signature: Option<ReturnSignature>,
 }
 
-/// grammar.md line 111: gateStatement
+// grammar.md line 111: gateStatement
 #[derive(Debug, Clone, PartialEq)]
 pub struct GateStatement {
     pub name: Identifier,
@@ -297,7 +307,7 @@ pub struct GateStatement {
 }
 
 // ---------- Non-declaration calculations ----------
-/// grammar.md line 114: assignmentStatement
+// grammar.md line 114: assignmentStatement
 #[derive(Debug, Clone, PartialEq)]
 pub struct AssignmentStatement {
     pub target: IndexedIdentifier,
@@ -327,7 +337,7 @@ pub enum AssignmentRhs {
     Measure(MeasureExpression),
 }
 
-/// grammar.md line 118: calStatement; line 119: defcalStatement
+// grammar.md line 118: calStatement; line 119: defcalStatement
 #[derive(Debug, Clone, PartialEq)]
 pub struct CalStatement {
     pub block: Option<CalibrationBlock>,
@@ -345,50 +355,66 @@ pub struct DefcalStatement {
 pub type CalibrationBlock = String; // raw content inside CAL/DEFCAL blocks
 
 // ---------- Expressions and related nodes ----------
-/// grammar.md lines 129–160: expression precedence and forms
+// grammar.md lines 129–160: expression precedence and forms
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
     Parenthesis(Box<Expression>),
-    Index { expr: Box<Expression>, indices: Vec<IndexOperator> },
-    Unary { op: UnaryOp, expr: Box<Expression> },
-    Binary { op: BinaryOp, lhs: Box<Expression>, rhs: Box<Expression> },
-    Cast { ty: ClassicalType, expr: Box<Expression> },
+    Index {
+        expr: Box<Expression>,
+        indices: Vec<IndexOperator>,
+    },
+    Unary {
+        op: UnaryOp,
+        expr: Box<Expression>,
+    },
+    Binary {
+        op: BinaryOp,
+        lhs: Box<Expression>,
+        rhs: Box<Expression>,
+    },
+    Cast {
+        ty: ClassicalType,
+        expr: Box<Expression>,
+    },
     DurationOf(Box<Scope>),
-    Call { callee: Identifier, args: Vec<Expression> },
+    Call {
+        callee: Identifier,
+        args: Vec<Expression>,
+    },
     Literal(Literal),
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum UnaryOp {
-    BitNot,       // TILDE
-    LogicalNot,   // EXCLAMATION_POINT
-    Negate,       // MINUS
+    BitNot,     // TILDE
+    LogicalNot, // EXCLAMATION_POINT
+    Negate,     // MINUS
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum BinaryOp {
-    Power,            // DOUBLE_ASTERISK
-    Multiply,         // ASTERISK
-    Divide,           // SLASH
-    Modulo,           // PERCENT
-    Add,              // PLUS
-    Subtract,         // MINUS
-    ShiftLeft,        // BitshiftOperator <<
-    ShiftRight,       // BitshiftOperator >>
+    Power,      // DOUBLE_ASTERISK
+    Multiply,   // ASTERISK
+    Divide,     // SLASH
+    Modulo,     // PERCENT
+    Add,        // PLUS
+    Subtract,   // MINUS
+    ShiftLeft,  // BitshiftOperator <<
+    ShiftRight, // BitshiftOperator >>
     Less,
     LessEqual,
     Greater,
     GreaterEqual,
     Equal,
     NotEqual,
-    BitAnd,           // AMPERSAND
-    BitXor,           // CARET
-    BitOr,            // PIPE
-    LogicalAnd,       // DOUBLE_AMPERSAND
-    LogicalOr,        // DOUBLE_PIPE
+    BitAnd,     // AMPERSAND
+    BitXor,     // CARET
+    BitOr,      // PIPE
+    LogicalAnd, // DOUBLE_AMPERSAND
+    LogicalOr,  // DOUBLE_PIPE
 }
 
-/// grammar.md lines 147–159: literalExpression alternatives
+// grammar.md lines 147–159: literalExpression alternatives
 #[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
     Identifier(Identifier),
@@ -401,15 +427,15 @@ pub enum Literal {
     HardwareQubit(HardwareQubit),
 }
 
-/// A numeric literal that can be either an integer or a float
+// A numeric literal that can be either an integer or a float
 #[derive(Debug, Clone, PartialEq)]
 pub enum Number {
     Integer(usize),
     Float(f64),
 }
 
-/// Time units for Timing literals
-/// 'dt' | 'ns' | 'us' | 'µs' | 'ms' | 's';
+// Time units for Timing literals
+// 'dt' | 'ns' | 'us' | 'µs' | 'ms' | 's';
 #[derive(Debug, Clone, PartialEq)]
 pub enum TimeUnit {
     Dt,
@@ -418,7 +444,6 @@ pub enum TimeUnit {
     Ms,
     S,
 }
-
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum IndexOperator {
@@ -479,7 +504,7 @@ pub struct IndexedIdentifier {
 }
 
 // ---------- Types ----------
-/// grammar.md line 190: returnSignature; lines 191–195: gateModifier; 197–207: scalarType
+// grammar.md line 190: returnSignature; lines 191–195: gateModifier; 197–207: scalarType
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReturnSignature {
     pub ty: ScalarType,
@@ -493,7 +518,7 @@ pub enum GateModifier {
     NegCtrl(Option<Expression>),
 }
 
-/// grammar.md lines 197–207: scalarType
+// grammar.md lines 197–207: scalarType
 #[derive(Debug, Clone, PartialEq)]
 pub enum ScalarType {
     Bit { designator: Option<Designator> },
@@ -507,7 +532,7 @@ pub enum ScalarType {
     Complex { inner: Option<Box<ScalarType>> }, // COMPLEX [ scalarType ] ?
 }
 
-/// grammar.md line 208: qubitType; line 209: arrayType; line 210: arrayReferenceType; line 212: designator
+// grammar.md line 208: qubitType; line 209: arrayType; line 210: arrayReferenceType; line 212: designator
 #[derive(Debug, Clone, PartialEq)]
 pub struct QubitType {
     pub designator: Option<Designator>,
@@ -520,7 +545,10 @@ pub struct ArrayType {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ArrayReferenceMutability { Readonly, Mutable }
+pub enum ArrayReferenceMutability {
+    Readonly,
+    Mutable,
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ArrayReferenceSize {
@@ -584,8 +612,21 @@ pub enum ExternArgument {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ArgumentDefinition {
-    Scalar { ty: ScalarType, name: Identifier },
-    Qubit { ty: QubitType, name: Identifier },
-    Register { kind: OldStyleRegisterKind, name: Identifier, designator: Option<Designator> }, // CREG | QREG
-    ArrayReference { ty: ArrayReferenceType, name: Identifier },
+    Scalar {
+        ty: ScalarType,
+        name: Identifier,
+    },
+    Qubit {
+        ty: QubitType,
+        name: Identifier,
+    },
+    Register {
+        kind: OldStyleRegisterKind,
+        name: Identifier,
+        designator: Option<Designator>,
+    }, // CREG | QREG
+    ArrayReference {
+        ty: ArrayReferenceType,
+        name: Identifier,
+    },
 }
